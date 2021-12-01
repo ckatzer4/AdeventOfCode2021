@@ -8,4 +8,3 @@ defmodule Mix.Tasks.Aoc.Run do
     IO.puts(Aoc.part2(groups))
   end
 end
-
