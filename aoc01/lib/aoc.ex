@@ -26,13 +26,15 @@ defmodule Aoc do
 
   def part1(ints) do
     Enum.chunk_every(ints, 2, 1, :discard)
-    |> Enum.count(&(hd(&1) < hd(tl(&1))))
+    |> Enum.map(&List.to_tuple/1)
+    |> Enum.count(fn {a, b} -> a < b end)
   end
 
   def part2(ints) do
     Enum.chunk_every(ints, 3, 1, :discard)
     |> Enum.map(&Enum.sum/1)
     |> Enum.chunk_every(2, 1, :discard)
-    |> Enum.count(&(hd(&1) < hd(tl(&1))))
+    |> Enum.map(&List.to_tuple/1)
+    |> Enum.count(fn {a, b} -> a < b end)
   end
 end
