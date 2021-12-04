@@ -16,10 +16,6 @@ defmodule Aoc do
     :world
   end
 
-  def parse_line(line) do
-    String.graphemes(line)
-  end
-
   def parse(text) do
     bins =
       String.split(text, "\n", trim: true)
