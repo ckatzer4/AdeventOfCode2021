@@ -26,28 +26,27 @@ defmodule Aoc do
     fish
   end
 
-  def population(fish, days) do
-    fish =
-      Enum.reduce(1..days, fish, fn _, fish ->
-        new_fish = Map.get(fish, 0, 0)
-
-        fish =
-          Enum.reduce(0..7, %{}, fn gen, new ->
-            count = Map.get(fish, gen + 1, 0)
-
-            if gen == 6 do
-              # new_fish is also number fish starting over
-              Map.put(new, gen, count + new_fish)
-            else
-              Map.put(new, gen, count)
-            end
-          end)
-
-        Map.put(fish, 8, new_fish)
-      end)
-
+  def population(fish, 0) do
     Map.values(fish)
     |> Enum.sum()
+  end
+
+  def population(fish, days) do
+    new_fish = Map.get(fish, 0, 0)
+
+    fish =
+      Enum.map(0..8, fn gen ->
+        count = Map.get(fish, gen + 1, 0)
+
+        case gen do
+          8 -> {gen, new_fish}
+          6 -> {gen, count+new_fish}
+          _ -> {gen, count}
+        end
+      end)
+      |> Map.new()
+
+    population(fish, days - 1)
   end
 
   def part1(fish) do
