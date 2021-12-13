@@ -36,44 +36,32 @@ defmodule Aoc do
   end
 
   def part1(graph) do
-    Graph.paths(graph, "end", [["start"]], :part1)
-    |> length()
+    Graph.paths(graph, "start", :part1)
   end
 
   def part2(graph) do
-    Graph.paths(graph, "end", [["start"]], :part2)
-    |> length()
+    Graph.paths(graph, "start", :part2)
   end
 end
 
 defmodule Graph do
-  def paths(graph, term, paths, mode) do
-    # IO.inspect(paths)
+  def paths(graph, start, mode) do
+    paths(graph, start, mode, %{start => 1})
+  end
 
-    next_paths =
-      Enum.flat_map(paths, fn path ->
-        a = hd(path)
-
-        if a == term do
-          [path]
-        else
-          next = next_nodes(graph, a, path, mode)
-          Enum.map(next, &[&1 | path])
-        end
-      end)
-
-    IO.puts(length(next_paths))
-    IO.puts(Enum.map(next_paths, &length(&1)) |> Enum.sum())
-    IO.puts("=====")
-
-    if next_paths == paths do
-      paths
+  def paths(graph, node, mode, seen) do
+    if node == "end" do
+      1
     else
-      paths(graph, term, next_paths, mode)
+      next_nodes(graph, node, seen, mode)
+      |> Enum.map(fn {next, new_seen} ->
+        paths(graph, next, mode, new_seen)
+      end)
+      |> Enum.sum()
     end
   end
 
-  def next_nodes(graph, a, path, mode) do
+  def next_nodes(graph, a, seen, mode) do
     # given our graph, where can a go to next?
     # Part1:
     # * must not be a lowercase that we already visited
@@ -84,14 +72,13 @@ defmodule Graph do
 
     Enum.filter(all, fn b ->
       low = b == String.downcase(b)
-      visits = Enum.frequencies(path)
-      visited = Map.get(visits, b, 0)
+      visited = Map.get(seen, b, 0)
 
       if mode == :part1 do
         !(low && visited > 0)
       else
         double_visits =
-          Stream.filter(visits, fn {n, _} ->
+          Stream.filter(seen, fn {n, _} ->
             n == String.downcase(n)
           end)
           |> Enum.any?(fn {_, c} -> c == 2 end)
@@ -103,25 +90,6 @@ defmodule Graph do
         end
       end
     end)
-  end
-end
-
-defmodule MyPath do
-  defstruct path: [], visits: %{}, doubled: false
-
-  def from_list(list) do
-    Enum.reverse(list)
-    |> Enum.reduce(%MyPath{}, fn node, path -> Mypath.push(path, node) end)
-  end
-
-  def push(my_path, node) do
-    new_path = [node | my_path.path]
-    new_visits = Map.update(my_path.visits, node, 1, &(&1 + 1))
-    new_doubled = Map.fetch!(new_visits, node) > 1
-    %MyPath{path: new_path, visits: new_visits, doubled: new_doubled}
-  end
-
-  def visited?(my_path, node) do
-    Map.has_key?(my_path.visits, node)
+    |> Enum.map(fn b -> {b, Map.update(seen, b, 1, &(&1 + 1))} end)
   end
 end
