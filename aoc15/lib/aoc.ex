@@ -39,16 +39,20 @@ defmodule Aoc do
 
   def part2(map) do
     {rmax, cmax} = DFS.target(map)
-    rmax = rmax+1
-    cmax = cmax+1
-    big_map = Enum.reduce(0..4, map, fn i, row_map ->
-      Enum.reduce(0..4, row_map, fn j, big_map ->
-        Enum.reduce(map, big_map, fn {{r,c}, v}, big_map ->
-          # value wraps from 9 to 1, which is essentially mod 9 with a +1 offset, not mod 10
-          Map.put(big_map, {i*rmax+r, j*cmax+c}, rem(v+i+j-1,9)+1)
+    rmax = rmax + 1
+    cmax = cmax + 1
+
+    big_map =
+      Enum.reduce(0..4, map, fn i, row_map ->
+        Enum.reduce(0..4, row_map, fn j, big_map ->
+          Enum.reduce(map, big_map, fn {{r, c}, v}, big_map ->
+            # value wraps from 9 to 1,
+            # essentially mod 9 with +1 offset, not mod 10
+            Map.put(big_map, {i * rmax + r, j * cmax + c}, rem(v + i + j - 1, 9) + 1)
+          end)
         end)
       end)
-    end)
+
     DFS.best_path(big_map)
   end
 end
@@ -76,8 +80,8 @@ defmodule DFS do
     |> Enum.sort_by(&Map.fetch!(map, &1))
   end
 
-  def find_paths(map, term, [co | frontier], cost_to) do
-    # IO.inspect({co,Map.fetch!(map, co)})
+  def find_paths(map, term, frontier, cost_to) do
+    {{cost, co}, frontier} = PriorityQueue.pop!(frontier)
 
     if co == term do
       Map.fetch!(cost_to, term)
@@ -95,14 +99,24 @@ defmodule DFS do
           Map.put_new(cost_to, nco, cost)
         end)
 
-      # frontier must always be sorted by cost
-      frontier = new_steps ++ frontier
-      |> Enum.sort_by(&Map.fetch!(cost_to, &1))
+      # frontier must always be sorted by cost+distance
+      frontier =
+        Enum.reduce(new_steps, frontier, fn nco, pq ->
+          PriorityQueue.put(pq, priority(nco, cost_to), nco)
+        end)
+
       find_paths(map, term, frontier, cost_to)
     end
   end
 
+  def priority({r, c}, cost_to) do
+    # if you wanted to be cool and do A* instead of Dijkstra's,
+    # you put a cool heuristic here and fix my other bugs...
+    Map.fetch!(cost_to, {r, c})
+  end
+
   def best_path(map) do
-    find_paths(map, target(map), [{0, 0}], %{{0, 0} => 0})
+    pq = PriorityQueue.new() |> PriorityQueue.put(0, {0, 0})
+    find_paths(map, target(map), pq, %{{0, 0} => 0})
   end
 end

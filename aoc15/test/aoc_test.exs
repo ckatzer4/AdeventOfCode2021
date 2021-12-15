@@ -19,7 +19,7 @@ defmodule AocTest do
 1293138521
 2311944581"
     t = Aoc.parse(text)
-    assert Aoc.part1(t)==40
+    assert Aoc.part1(t) == 40
   end
 
   test "part2" do
@@ -34,6 +34,6 @@ defmodule AocTest do
 1293138521
 2311944581"
     t = Aoc.parse(text)
-    assert Aoc.part2(t)==315
+    assert Aoc.part2(t) == 315
   end
 end
