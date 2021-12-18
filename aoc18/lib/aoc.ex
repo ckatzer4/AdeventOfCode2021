@@ -118,6 +118,10 @@ defmodule Snail do
     {_rec(zeros), _rec(ones)}
   end
 
+  # try recursive solution:
+  # https://github.com/benediktwerner/AdventOfCode/blob/master/2021/day18/sol.py#L25
+  # this function flattens the number into two lists
+  # creative, yes; performant, not particularly
   def explode(num) do
     ind = all_coords(num, [])
     dig = Enum.map(ind, &find(num, &1))
@@ -157,23 +161,24 @@ defmodule Snail do
   end
 
   def split(num) do
-    ind = all_coords(num, [])
-    dig = Enum.map(ind, &find(num, &1))
-    m = Enum.find_index(dig, &(&1>9))
-    mi = Enum.at(ind, m)
-    md = Enum.at(dig, m)
-    left = floor(md/2)
-    right = ceil(md/2)
-    li = mi ++ [0]
-    ri = mi ++ [1]
+    elem(_split(num),1)
+  end
 
-    ind = List.replace_at(ind, m, li)
-    |> List.insert_at(m+1, ri)
-
-    dig = List.replace_at(dig, m, left)
-    |> List.insert_at(m+1, right)
-
-    reconstruct(ind, dig)
+  def _split(num) do
+    case num do
+      {a,b} ->
+        case _split(a) do
+          {true, new} -> {true, {new,b}}
+          {false, _} ->
+            case _split(b) do
+              {true, new} -> {true, {a, new}}
+              {false, _} -> {false, {a, b}}
+            end
+        end
+      a when a>9 ->
+        {true, {floor(a/2), ceil(a/2)}}
+      a -> {false, a}
+    end
   end
 
   def nested_level(num) do
