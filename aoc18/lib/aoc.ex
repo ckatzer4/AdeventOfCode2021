@@ -24,7 +24,7 @@ defmodule Aoc do
     nums
   end
 
-  def part1([n|nums]) do
+  def part1([n | nums]) do
     Enum.reduce(nums, n, fn num, sum ->
       Snail.reduce({sum, num})
     end)
@@ -35,14 +35,16 @@ defmodule Aoc do
   # http://www.petecorey.com/blog/2018/11/12/permutations-with-and-without-repetition-in-elixir/
   def with_repetitions([], _k), do: [[]]
   def with_repetitions(_list, 0), do: [[]]
+
   def with_repetitions(list, k) do
     for head <- list, tail <- with_repetitions(list, k - 1), do: [head | tail]
   end
 
   def part2(nums) do
     pairs = with_repetitions(nums, 2)
-    Enum.map(pairs, fn [a,b] ->
-        Snail.magnitude(Snail.reduce({a,b}))
+
+    Enum.map(pairs, fn [a, b] ->
+      Snail.magnitude(Snail.reduce({a, b}))
     end)
     |> Enum.max()
   end
@@ -76,108 +78,80 @@ defmodule Snail do
 
   def magnitude(num) do
     case num do
-      {a,b} -> 3*magnitude(a)+2*magnitude(b)
+      {a, b} -> 3 * magnitude(a) + 2 * magnitude(b)
       a -> a
     end
   end
 
-  def all_coords(num, co) do
-    case num do
-      {a, b} ->
-        all_coords(a, [0 | co]) ++ all_coords(b, [1 | co])
+  def explode(num) do
+    elem(_expl(num, 4), 2)
+  end
 
-      _ ->
-        [Enum.reverse(co)]
+  def _expl({a, b}, i) do
+    if i == 0 do
+      # reached target depth, split
+      {true, a, 0, b}
+    else
+      case _expl(a, i - 1) do
+        {true, l, a, r} ->
+          {true, l, {a, addl(b, r)}, 0}
+
+        {false, _, _, _} ->
+          case _expl(b, i - 1) do
+            {true, l, b, r} ->
+              {true, 0, {addr(a, l), b}, r}
+
+            {false, _, _, _} ->
+              {false, 0, {a, b}, 0}
+          end
+      end
     end
   end
 
-  def find(num, []) do
-    num
+  # a should be an int
+  def _expl(a, _) do
+    {false, 0, a, 0}
   end
 
-  def find(num, [i | co]) do
-    find(elem(num, i), co)
+  def addr({a, b}, r) do
+    {a, addr(b, r)}
   end
 
-  def reconstruct(index, digits) do
-    i_d = Enum.zip(index, digits)
-    zeros = Enum.filter(i_d, fn {i, _} -> hd(i) == 0 end)
-    ones = Enum.filter(i_d, fn {i, _} -> hd(i) == 1 end)
-    {_rec(zeros), _rec(ones)}
+  def addr(a, r) do
+    a + r
   end
 
-  def _rec([{_i, d}]) do
-    d
+  def addl({a, b}, l) do
+    {addl(a, l), b}
   end
 
-  def _rec(i_d) do
-    # pop the common digit off and loop again
-    i_d = Enum.map(i_d, fn {i, d} -> {tl(i), d} end)
-    zeros = Enum.filter(i_d, fn {i, _} -> hd(i) == 0 end)
-    ones = Enum.filter(i_d, fn {i, _} -> hd(i) == 1 end)
-    {_rec(zeros), _rec(ones)}
-  end
-
-  # try recursive solution:
-  # https://github.com/benediktwerner/AdventOfCode/blob/master/2021/day18/sol.py#L25
-  # this function flattens the number into two lists
-  # creative, yes; performant, not particularly
-  def explode(num) do
-    ind = all_coords(num, [])
-    dig = Enum.map(ind, &find(num, &1))
-    l = Enum.find_index(ind, &(length(&1) > 4))
-    {li, ind} = List.pop_at(ind, l)
-    li = List.delete_at(li, -1)
-    ind = List.replace_at(ind, l, li)
-
-    dig =
-      cond do
-        # leftmost side
-        l == 0 ->
-          # lost
-          {_, dig} = List.pop_at(dig, l)
-          rd = Enum.at(dig, l)
-
-          List.replace_at(dig, l, 0)
-          |> List.update_at(l + 1, &(&1 + rd))
-
-        # rightmost
-        l + 1 == length(ind) ->
-          {ld, dig} = List.pop_at(dig, l)
-          dig = List.update_at(dig, l - 1, &(&1 + ld))
-          # lost
-          List.replace_at(dig, l, 0)
-
-        true ->
-          {ld, dig} = List.pop_at(dig, l)
-          dig = List.update_at(dig, l - 1, &(&1 + ld))
-          rd = Enum.at(dig, l)
-
-          List.replace_at(dig, l, 0)
-          |> List.update_at(l + 1, &(&1 + rd))
-      end
-
-    reconstruct(ind, dig)
+  def addl(a, l) do
+    a + l
   end
 
   def split(num) do
-    elem(_split(num),1)
+    elem(_split(num), 1)
   end
 
   def _split(num) do
     case num do
-      {a,b} ->
+      {a, b} ->
         case _split(a) do
-          {true, new} -> {true, {new,b}}
+          {true, new} ->
+            {true, {new, b}}
+
           {false, _} ->
             case _split(b) do
               {true, new} -> {true, {a, new}}
               {false, _} -> {false, {a, b}}
             end
         end
-      a when a>9 ->
-        {true, {floor(a/2), ceil(a/2)}}
-      a -> {false, a}
+
+      a when a > 9 ->
+        {true, {floor(a / 2), ceil(a / 2)}}
+
+      a ->
+        {false, a}
     end
   end
 

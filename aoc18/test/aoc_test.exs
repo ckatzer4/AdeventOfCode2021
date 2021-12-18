@@ -5,13 +5,10 @@ defmodule AocTest do
   test "snail functions" do
     text = "[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]"
     s = Snail.parse(text)
-    i = Snail.all_coords(s, [])
-    d = Enum.map(i, &Snail.find(s, &1))
-    assert s == Snail.reconstruct(i, d)
 
     assert Snail.explode(s) == {{{{0, 7}, 4}, {7, {{8, 4}, 9}}}, {1, 1}}
 
-    assert Snail.reduce(s) == {{{{0,7},4},{{7,8},{6,0}}},{8,1}}
+    assert Snail.reduce(s) == {{{{0, 7}, 4}, {{7, 8}, {6, 0}}}, {8, 1}}
   end
 
   test "part1" do
