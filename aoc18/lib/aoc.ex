@@ -31,6 +31,8 @@ defmodule Aoc do
     |> Snail.magnitude()
   end
 
+  # stolen:
+  # http://www.petecorey.com/blog/2018/11/12/permutations-with-and-without-repetition-in-elixir/
   def with_repetitions([], _k), do: [[]]
   def with_repetitions(_list, 0), do: [[]]
   def with_repetitions(list, k) do
@@ -39,11 +41,8 @@ defmodule Aoc do
 
   def part2(nums) do
     pairs = with_repetitions(nums, 2)
-    Enum.flat_map(pairs, fn [a,b] ->
-      [
-        Snail.magnitude(Snail.reduce({a,b})),
-        Snail.magnitude(Snail.reduce({b,a})),
-      ]
+    Enum.map(pairs, fn [a,b] ->
+        Snail.magnitude(Snail.reduce({a,b}))
     end)
     |> Enum.max()
   end
